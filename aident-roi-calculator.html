@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Digital Dentistry ROI Calculator | Aident</title>
+    <meta name="description" content="Compare payback and savings of multiple intraoral scanners, lab scanners, or 3D printers against your current workflow.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem 1.5rem;
+            color: #334155;
+            -webkit-font-smoothing: antialiased;
+        }
+        .calculator-container {
+            max-width: 1200px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px -5px rgba(2, 13, 34, 0.05), 0 20px 40px -10px rgba(2, 13, 34, 0.03);
+            padding: 2.5rem;
+        }
+        .brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 1.2rem;
+        }
+        .brand-logo {
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #0f172a, #1e3a8a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .brand-tag { font-size: 0.85rem; font-weight: 500; color: #64748b; background: #f1f5f9; padding: 0.35rem 0.75rem; border-radius: 20px; }
+
+        h1 { font-size: 2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+        .subhead { font-size: 1rem; color: #64748b; margin-bottom: 2.5rem; max-width: 700px; line-height: 1.5; }
+
+        .scenario-selector {
+            background: linear-gradient(135deg, #1e3a8a, #0f172a);
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
+        }
+        .scenario-selector label { font-weight: 600; color: #ffffff; font-size: 0.95rem; }
+        select {
+            padding: 0.6rem 2.5rem 0.6rem 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+            transition: all 0.2s;
+        }
+        select:hover { background-color: rgba(255, 255, 255, 0.25); }
+        select option { color: #0f172a; background: white; }
+
+        .section-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 1.15rem;
+            margin: 2.5rem 0 1.2rem 0;
+            letter-spacing: -0.3px;
+        }
+        .shared-params {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+        .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+        }
+        .input-group .unit { font-weight: 500; color: #94a3b8; }
+        .input-row { display: flex; align-items: center; gap: 0.75rem; }
+
+        input[type="range"] {
+            flex: 2; height: 6px; -webkit-appearance: none; background: #cbd5e1; border-radius: 8px; outline: none; transition: background 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 16px; height: 16px; background: #2563eb; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); background: #1d4ed8; }
+
+        input[type="number"] {
+            width: 75px; padding: 0.4rem; border-radius: 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: 600; font-size: 0.85rem; color: #0f172a; background: #fff; outline: none; transition: border 0.2s;
+        }
+        input[type="number"]:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+
+        .device-list { display: flex; flex-direction: column; gap: 1.5rem; }
+        .device-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+        }
+        .device-card:hover { border-color: #cbd5e1; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); }
+        .device-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
+        .device-name-input {
+            padding: 0.4rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 600; font-size: 0.95rem; width: 220px; color: #0f172a; outline: none;
+        }
+        .device-name-input:focus { border-color: #2563eb; }
+        .remove-device {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 50%; width: 28px; height: 28px; font-size: 0.9rem; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; margin-left: auto; transition: all 0.2s;
+        }
+        .remove-device:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+        .device-params {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem 1.5rem;
+        }
+
+        .btn-add {
+            background: #f1f5f9; color: #1e3a8a; border: 1px dashed #cbd5e1; padding: 0.75rem 1.8rem; border-radius: 12px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-top: 1rem; align-self: flex-start; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
+        }
+        .btn-add:hover { background: #e2e8f0; border-color: #94a3b8; color: #0f172a; }
+
+        .comparison-table {
+            width: 100%; border-collapse: separate; border-spacing: 0; margin: 1rem 0; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;
+        }
+        .comparison-table th { background: #f8fafc; color: #475569; font-weight: 600; padding: 1rem; text-align: center; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
+        .comparison-table td { padding: 1rem; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 500; font-size: 0.9rem; }
+        .comparison-table tr:last-child td { border-bottom: none; }
+        .comparison-table tr:hover td { background-color: #f8fafc; }
+
+        .chart-box { margin-top: 2rem; width: 100%; height: 380px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; }
+
+        .share-section { display: flex; align-items: center; gap: 0.8rem; margin-top: 2.5rem; flex-wrap: wrap; background: #f8fafc; padding: 1rem 1.5rem; border-radius: 14px; }
+        .share-btn { color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; cursor: pointer; text-decoration: none; transition: transform 0.2s, filter 0.2s; }
+        .share-btn.twitter { background: #0f1419; }
+        .share-btn.linkedin { background: #0a66c2; }
+        .share-btn.facebook { background: #1877f2; }
+        .share-btn.reddit { background: #ff4500; }
+        .share-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .footnote { margin-top: 1.8rem; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 1.2rem; text-align: center; line-height: 1.5; }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem 0.5rem; }
+            .calculator-container { padding: 1.5rem; border-radius: 16px; }
+            .shared-params, .device-params { grid-template-columns: 1fr; gap: 1.2rem; }
+            .brand-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .brand-tag { margin-left: 0; }
+            .chart-box { height: 300px; padding: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="calculator-container">
+    <div class="brand-header">
+        <span class="brand-logo">Aident</span>
+        <span class="brand-tag">3D Dental Solutions</span>
+    </div>
+    <h1>📊 Multi-Device ROI Comparison</h1>
+    <div class="subhead">Compare payback and net savings of different scanners or 3D printers against your traditional analog workflow.</div>
+
+    <div class="scenario-selector">
+        <label for="scenarioSelect">Choose Assessment Scenario:</label>
+        <select id="scenarioSelect">
+            <option value="intraoral">🦷 Intraoral Scanner</option>
+            <option value="labscanner">🔬 Lab Scanner</option>
+            <option value="printer3d">🖨️ 3D Printer + Resin</option>
+        </select>
+    </div>
+
+    <div class="section-title">⚙️ Traditional Workflow Parameters (Shared)</div>
+    <div class="shared-params" id="sharedParams"></div>
+
+    <div class="section-title">🖥️ Digital Investment for Comparison</div>
+    <div class="device-list" id="deviceList"></div>
+    <button class="btn-add" id="addDeviceBtn"><span>+</span> Add Alternative Device</button>
+
+    <div class="section-title">📋 Clear Financial Summary</div>
+    <div style="overflow-x: auto;">
+        <table class="comparison-table" id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Device Name</th>
+                    <th>Est. Annual Savings</th>
+                    <th>Payback Period</th>
+                    <th>3-Year Net Profit</th>
+                    <th>Monthly Difference</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+        </table>
+    </div>
+
+    <div class="section-title">📈 Cumulative Cost Curve (36 Months)</div>
+    <div class="chart-box">
+        <canvas id="costChart" aria-label="Cumulative cost comparison curves"></canvas>
+    </div>
+
+    <div class="share-section">
+        <span style="font-weight:700; color:#475569; font-size: 0.9rem;">📤 Export & Share Analysis:</span>
+        <a href="#" class="share-btn twitter" id="shareTwitter" target="_blank" rel="noopener">X (Twitter)</a>
+        <a href="#" class="share-btn linkedin" id="shareLinkedIn" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="#" class="share-btn facebook" id="shareFacebook" target="_blank" rel="noopener">Facebook</a>
+        <a href="#" class="share-btn reddit" id="shareReddit" target="_blank" rel="noopener">Reddit</a>
+    </div>
+    <div class="footnote">
+        ⚕️ Calculations are derived from global industry dental lab performance averages. Adjust inputs to fit local regional clinic operating metrics.<br><strong>Insights provided securely by <span id="brandNameFooter">Aident Technology</span></strong>.
+    </div>
+</div>
+
+<script>
+    (function() {
+        const BRAND_NAME = "Aident Technology";
+        const WEBSITE_URL = window.location.href;
+        document.getElementById('brandNameFooter').textContent = BRAND_NAME;
+
+        const scenarioPresets = {
+            intraoral: {
+                dailyAvg: 5, tradMaterial: 8, tradTime: 15, hourlyRate: 80,
+                reworkRate: 8, reworkCost: 25, shipping: 200, showShipping: true,
+                tradTimeEnabled: true, workDays: 22,
+                defaultDevice: { name: "Intraoral Scanner A", price: 25000, annualFee: 2000, consumable: 3, opTime: 5 }
+            },
+            labscanner: {
+                dailyAvg: 10, tradMaterial: 5, tradTime: 20, hourlyRate: 40,
+                reworkRate: 5, reworkCost: 10, shipping: 0, showShipping: false,
+                tradTimeEnabled: true, workDays: 22,
+                defaultDevice: { name: "Lab Scanner A", price: 20000, annualFee: 1500, consumable: 0.5, opTime: 3 }
+            },
+            printer3d: {
+                dailyAvg: 8, tradMaterial: 15, tradTime: 0, hourlyRate: 40,
+                reworkRate: 3, reworkCost: 5, shipping: 0, showShipping: false,
+                tradTimeEnabled: false, workDays: 22,
+                defaultDevice: { name: "3D Printer A", price: 10000, annualFee: 1000, consumable: 2, opTime: 10 }
+            }
+        };
+
+        let currentScenario = 'intraoral';
+        let devices = [];
+        let deviceIdCounter = 0;
+        let chartInstance = null;
+
+        const curveColors = ['#2563eb','#ea580c','#16a34a','#9333ea','#dc2626','#0d9488'];
+        const tradColor = '#64748b';
+
+        const sharedParamsDiv = document.getElementById('sharedParams');
+        const deviceListDiv = document.getElementById('deviceList');
+        const addDeviceBtn = document.getElementById('addDeviceBtn');
+        const resultsBody = document.getElementById('resultsBody');
+        const scenarioSelect = document.getElementById('scenarioSelect');
+
+        function renderSharedParams() {
+            const s = scenarioPresets[currentScenario];
+            sharedParamsDiv.innerHTML = `
+                <div class="input-group">
+                    <label>📅 Daily cases <span class="unit">cases</span></label>
+                    <div class="input-row">
+                        <input type="range" id="dailyAvg" min="1" max="30" value="${s.dailyAvg}" step="0.5">
+                        <input type="number" id="dailyAvgNum" min="1" max="30" value="${s.dailyAvg}" step="0.5">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>🧱 Traditional material <span class="unit">$/case</span></label>
+                    <div class="input-row">
+                        <input type="range" id="tradMaterial" min="0" max="50" value="${s.tradMaterial}" step="0.5">
+                        <input type="number" id="tradMaterialNum" min="0" max="50" value="${s.tradMaterial}" step="0.5">
+                    </div>
+                </div>
+                <div class="input-group" id="tradTimeGroup">
+                    <label>⏱️ Traditional time <span class="unit">(min)</span></label>
+                    <div class="input-row">
+                        <input type="range" id="tradTime" min="0" max="60" value="${s.tradTime}" step="0.5">
+                        <input type="number" id="tradTimeNum" min="0" max="60" value="${s.tradTime}" step="0.5">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>💰 Hourly rate <span class="unit">$/hr</span></label>
+                    <div class="input-row">
+                        <input type="range" id="hourlyRate" min="20" max="200" value="${s.hourlyRate}" step="1">
+                        <input type="number" id="hourlyRateNum" min="20" max="200" value="${s.hourlyRate}" step="1">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>🔄 Rework rate <span class="unit">%</span></label>
+                    <div class="input-row">
+                        <input type="range" id="reworkRate" min="0" max="25" value="${s.reworkRate}" step="0.5">
+                        <input type="number" id="reworkRateNum" min="0" max="25" value="${s.reworkRate}" step="0.5">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>💸 Rework cost/case <span class="unit">$</span></label>
+                    <div class="input-row">
+                        <input type="range" id="reworkCost" min="0" max="100" value="${s.reworkCost}" step="1">
+                        <input type="number" id="reworkCostNum" min="0" max="100" value="${s.reworkCost}" step="1">
+                    </div>
+                </div>
+                <div class="input-group" id="shippingGroup">
+                    <label>📦 Traditional shipping/month <span class="unit">$</span></label>
+                    <div class="input-row">
+                        <input type="range" id="shippingCost" min="0" max="1000" value="${s.shipping}" step="10">
+                        <input type="number" id="shippingCostNum" min="0" max="1000" value="${s.shipping}" step="10">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>🗓️ Work days/month <span class="unit">days</span></label>
+                    <div class="input-row">
+                        <input type="range" id="workDays" min="15" max="30" value="${s.workDays}" step="0.5">
+                        <input type="number" id="workDaysNum" min="15" max="30" value="${s.workDays}" step="0.5">
+                    </div>
+                </div>
+            `;
+            document.getElementById('shippingGroup').style.display = s.showShipping ? 'flex' : 'none';
+            const tradTimeInput = document.getElementById('tradTime');
+            const tradTimeNum = document.getElementById('tradTimeNum');
+            if (s.tradTimeEnabled) {
+                tradTimeInput.disabled = false; tradTimeNum.disabled = false;
+                document.getElementById('tradTimeGroup').style.opacity = '1';
+            } else {
+                tradTimeInput.disabled = true; tradTimeNum.disabled = true;
+                tradTimeInput.value = 0; tradTimeNum.value = 0;
+                document.getElementById('tradTimeGroup').style.opacity = '0.4';
+            }
+
+            bindSync('dailyAvg','dailyAvgNum');
+            bindSync('tradMaterial','tradMaterialNum');
+            bindSync('tradTime','tradTimeNum');
+            bindSync('hourlyRate','hourlyRateNum');
+            bindSync('reworkRate','reworkRateNum');
+            bindSync('reworkCost','reworkCostNum');
+            bindSync('shippingCost','shippingCostNum');
+            bindSync('workDays','workDaysNum');
+
+            document.querySelectorAll('#sharedParams input').forEach(inp => inp.addEventListener('input', updateAll));
+        }
+
+        function bindSync(rangeId, numId) {
+            const r = document.getElementById(rangeId);
+            const n = document.getElementById(numId);
+            if(!r||!n) return;
+            r.addEventListener('input', ()=> n.value = r.value);
+            n.addEventListener('input', ()=> r.value = n.value);
+        }
+
+        function getSharedValues() {
+            return {
+                dailyAvg: parseFloat(document.getElementById('dailyAvg').value)||0,
+                tradMaterial: parseFloat(document.getElementById('tradMaterial').value)||0,
+                tradTime: parseFloat(document.getElementById('tradTime').value)||0,
+                hourlyRate: parseFloat(document.getElementById('hourlyRate').value)||0,
+                reworkRate: parseFloat(document.getElementById('reworkRate').value)||0,
+                reworkCost: parseFloat(document.getElementById('reworkCost').value)||0,
+                shippingCost: parseFloat(document.getElementById('shippingCost').value)||0,
+                workDays: parseFloat(document.getElementById('workDays').value)||22,
+                tradTimeEnabled: !document.getElementById('tradTime').disabled,
+                showShipping: document.getElementById('shippingGroup').style.display !== 'none'
+            };
+        }
+
+        function createDevice(deviceData = null) {
+            const id = deviceIdCounter++;
+            const defaultDev = scenarioPresets[currentScenario].defaultDevice;
+            const dev = deviceData || {
+                name: defaultDev.name, price: defaultDev.price, annualFee: defaultDev.annualFee, consumable: defaultDev.consumable, opTime: defaultDev.opTime
+            };
+            devices.push({ id, ...dev });
+            renderDeviceCards();
+        }
+
+        function removeDevice(id) {
+            devices = devices.filter(d => d.id !== id);
+            renderDeviceCards();
+        }
+
+        function renderDeviceCards() {
+            deviceListDiv.innerHTML = '';
+            devices.forEach((dev) => {
+                const card = document.createElement('div');
+                card.className = 'device-card';
+                card.innerHTML = `
+                    <div class="device-header">
+                        <input type="text" class="device-name-input" value="${escapeHtml(dev.name)}" data-id="${dev.id}" placeholder="Device name">
+                        ${devices.length > 1 ? `<button class="remove-device" data-id="${dev.id}">✕</button>` : ''}
+                    </div>
+                    <div class="device-params">
+                        <div class="input-group">
+                            <label>💰 Purchase price <span class="unit">$</span></label>
+                            <div class="input-row">
+                                <input type="range" class="dev-price-range" min="1000" max="60000" value="${dev.price}" step="100" data-id="${dev.id}">
+                                <input type="number" class="dev-price-num" min="1000" max="60000" value="${dev.price}" step="100" data-id="${dev.id}">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>📋 Annual fee <span class="unit">$</span></label>
+                            <div class="input-row">
+                                <input type="range" class="dev-fee-range" min="0" max="10000" value="${dev.annualFee}" step="50" data-id="${dev.id}">
+                                <input type="number" class="dev-fee-num" min="0" max="10000" value="${dev.annualFee}" step="50" data-id="${dev.id}">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>🧪 Consumable/case <span class="unit">$</span></label>
+                            <div class="input-row">
+                                <input type="range" class="dev-cons-range" min="0" max="20" value="${dev.consumable}" step="0.1" data-id="${dev.id}">
+                                <input type="number" class="dev-cons-num" min="0" max="20" value="${dev.consumable}" step="0.1" data-id="${dev.id}">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>⌛ Operation time <span class="unit">(min)</span></label>
+                            <div class="input-row">
+                                <input type="range" class="dev-time-range" min="0.5" max="30" value="${dev.opTime}" step="0.5" data-id="${dev.id}">
+                                <input type="number" class="dev-time-num" min="0.5" max="30" value="${dev.opTime}" step="0.5" data-id="${dev.id}">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                deviceListDiv.appendChild(card);
+            });
+
+            document.querySelectorAll('.device-name-input').forEach(inp => {
+                inp.addEventListener('input', function(e) {
+                    const id = parseInt(this.dataset.id);
+                    const dev = devices.find(d => d.id === id);
+                    if (dev) dev.name = this.value;
+                    updateAll();
+                });
+            });
+            document.querySelectorAll('.remove-device').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const id = parseInt(this.dataset.id);
+                    removeDevice(id);
+                });
+            });
+            ['price','fee','cons','time'].forEach(prop => {
+                document.querySelectorAll(`.dev-${prop}-range`).forEach(r => {
+                    r.addEventListener('input', function() {
+                        const id = parseInt(this.dataset.id);
+                        const num = document.querySelector(`.dev-${prop}-num[data-id="${id}"]`);
+                        if (num) num.value = this.value;
+                        updateDeviceFromInput(id);
+                    });
+                });
+                document.querySelectorAll(`.dev-${prop}-num`).forEach(n => {
+                    n.addEventListener('input', function() {
+                        const id = parseInt(this.dataset.id);
+                        const range = document.querySelector(`.dev-${prop}-range[data-id="${id}"]`);
+                        if (range) range.value = this.value;
+                        updateDeviceFromInput(id);
+                    });
+                });
+            });
+        }
+
+        function updateDeviceFromInput(id) {
+            const dev = devices.find(d => d.id === id);
+            if (!dev) return;
+            const priceRange = document.querySelector(`.dev-price-range[data-id="${id}"]`);
+            const feeRange = document.querySelector(`.dev-fee-range[data-id="${id}"]`);
+            const consRange = document.querySelector(`.dev-cons-range[data-id="${id}"]`);
+            const timeRange = document.querySelector(`.dev-time-range[data-id="${id}"]`);
+            if (priceRange) dev.price = parseFloat(priceRange.value)||0;
+            if (feeRange) dev.annualFee = parseFloat(feeRange.value)||0;
+            if (consRange) dev.consumable = parseFloat(consRange.value)||0;
+            if (timeRange) dev.opTime = parseFloat(timeRange.value)||0;
+            updateAll();
+        }
+
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return m;
+            });
+        }
+
+        function updateAll() {
+            const shared = getSharedValues();
+            const monthlyCases = shared.dailyAvg * shared.workDays;
+            const tradMaterialM = monthlyCases * shared.tradMaterial;
+            const tradLaborM = shared.tradTimeEnabled ? monthlyCases * (shared.tradTime/60) * shared.hourlyRate : 0;
+            const tradReworkM = monthlyCases * (shared.reworkRate/100) * shared.reworkCost;
+            const tradShippingM = shared.showShipping ? shared.shippingCost : 0;
+            const tradMonthlyTotal = tradMaterialM + tradLaborM + tradReworkM + tradShippingM;
+
+            const results = devices.map(dev => {
+                const digMaterialM = monthlyCases * dev.consumable;
+                const digLaborM = monthlyCases * (dev.opTime/60) * shared.hourlyRate;
+                const digMonthlyFee = dev.annualFee / 12;
+                const digMonthlyTotal = digMaterialM + digLaborM + digMonthlyFee;
+                // 已包含返工成本节省
+                const annualSaving = ((tradMaterialM - digMaterialM) + (tradLaborM - digLaborM) + tradReworkM) * 12 + (tradShippingM * 12) - dev.annualFee;
+                let payback = null;
+                if (tradMonthlyTotal > digMonthlyTotal && dev.price > 0) {
+                    payback = dev.price / (tradMonthlyTotal - digMonthlyTotal);
+                }
+                const cost3YearTrad = tradMonthlyTotal * 36;
+                const cost3YearDig = dev.price + digMonthlyTotal * 36;
+                const net3Year = cost3YearTrad - cost3YearDig;
+                const monthlyDiff = tradMonthlyTotal - digMonthlyTotal;
+                return { name: dev.name, annualSaving, payback, net3Year, monthlyDiff, digMonthlyTotal, price: dev.price };
+            });
+
+            resultsBody.innerHTML = results.map(r => `
+                <tr>
+                    <td><strong>${escapeHtml(r.name)}</strong></td>
+                    <td style="color:${r.annualSaving>=0?'#16a34a':'#dc2626'}; font-weight:700;">$${r.annualSaving.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td>${r.payback !== null && isFinite(r.payback) && r.payback>=0 ? r.payback.toFixed(1)+' mos' : 'N/A'}</td>
+                    <td style="color:${r.net3Year>=0?'#16a34a':'#dc2626'}; font-weight:700;">$${r.net3Year.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td style="color:${r.monthlyDiff>=0?'#16a34a':'#dc2626'}">${r.monthlyDiff>=0?'+':''}$${r.monthlyDiff.toFixed(0)}/mo</td>
+                </tr>
+            `).join('');
+
+            drawChart(tradMonthlyTotal, results);
+        }
+
+        function drawChart(tradMonthly, deviceResults) {
+            const ctx = document.getElementById('costChart').getContext('2d');
+            const months = Array.from({length: 37}, (_, i) => i);
+            const datasets = [];
+
+            datasets.push({
+                label: 'Traditional workflow',
+                data: months.map(m => tradMonthly * m),
+                borderColor: tradColor,
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                pointRadius: 0,
+                borderDash: [5, 5],
+                tension: 0.1
+            });
+
+            deviceResults.forEach((res, idx) => {
+                const color = curveColors[idx % curveColors.length];
+                datasets.push({
+                    label: res.name,
+                    data: months.map(m => res.price + res.digMonthlyTotal * m),
+                    borderColor: color,
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    tension: 0.1
+                });
+            });
+
+            if (chartInstance) {
+                chartInstance.data.datasets = datasets;
+                chartInstance.update();
+            } else {
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: months, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: { padding: 10, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: $${ctx.raw.toLocaleString(undefined, {maximumFractionDigits:0})}` } },
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12, weight: 500 } } }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Months' }, grid: { display: false } },
+                            y: { title: { display: true, text: 'Cumulative Cost (USD)' }, beginAtZero: true, ticks: { callback: (val) => '$' + val.toLocaleString() } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateShareLinks() {
+            const text = encodeURIComponent(`Compare digital dentistry equipment ROI with this free calculator from ${BRAND_NAME}:`);
+            const url = encodeURIComponent(WEBSITE_URL);
+            document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+            document.getElementById('shareLinkedIn').href = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+            document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`;
+            document.getElementById('shareReddit').href = `https://www.reddit.com/submit?url=${url}&title=${encodeURIComponent('Digital Dentistry ROI Comparison')}`;
+        }
+
+        scenarioSelect.addEventListener('change', (e) => {
+            currentScenario = e.target.value;
+            devices = [];
+            deviceIdCounter = 0;
+            const def = scenarioPresets[currentScenario].defaultDevice;
+            createDevice({ name: def.name, price: def.price, annualFee: def.annualFee, consumable: def.consumable, opTime: def.opTime });
+            renderSharedParams();
+            updateAll();
+        });
+
+        addDeviceBtn.addEventListener('click', () => {
+            if (devices.length >= 5) { alert('Maximum 5 devices for comparison.'); return; }
+            const def = scenarioPresets[currentScenario].defaultDevice;
+            createDevice({ name: `Device ${devices.length+1}`, price: def.price, annualFee: def.annualFee, consumable: def.consumable, opTime: def.opTime });
+            updateAll();
+        });
+
+        // 初始化
+        const initDevice = scenarioPresets.intraoral.defaultDevice;
+        createDevice({ name: initDevice.name, price: initDevice.price, annualFee: initDevice.annualFee, consumable: initDevice.consumable, opTime: initDevice.opTime });
+        renderSharedParams();
+        updateAll();
+        updateShareLinks();
+    })();
+</script>
+</body>
+</html>
