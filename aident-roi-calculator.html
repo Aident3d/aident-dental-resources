@@ -601,14 +601,6 @@
             }
         }
 
-        function updateShareLinks() {
-            const text = encodeURIComponent(`Compare digital dentistry equipment ROI with this free calculator from ${BRAND_NAME}:`);
-            const url = encodeURIComponent(WEBSITE_URL);
-            document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-            document.getElementById('shareLinkedIn').href = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
-            document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`;
-            document.getElementById('shareReddit').href = `https://www.reddit.com/submit?url=${url}&title=${encodeURIComponent('Digital Dentistry ROI Comparison')}`;
-        }
 
         scenarioSelect.addEventListener('change', (e) => {
             currentScenario = e.target.value;
