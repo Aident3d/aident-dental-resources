@@ -399,6 +399,7 @@
         function removeDevice(id) {
             devices = devices.filter(d => d.id !== id);
             renderDeviceCards();
+            updateAll();  // 修复：删除设备后刷新计算结果和图表
         }
 
         function renderDeviceCards() {
@@ -517,7 +518,6 @@
                 const digLaborM = monthlyCases * (dev.opTime/60) * shared.hourlyRate;
                 const digMonthlyFee = dev.annualFee / 12;
                 const digMonthlyTotal = digMaterialM + digLaborM + digMonthlyFee;
-                // 已包含返工成本节省
                 const annualSaving = ((tradMaterialM - digMaterialM) + (tradLaborM - digLaborM) + tradReworkM) * 12 + (tradShippingM * 12) - dev.annualFee;
                 let payback = null;
                 if (tradMonthlyTotal > digMonthlyTotal && dev.price > 0) {
@@ -541,6 +541,12 @@
             `).join('');
 
             drawChart(tradMonthlyTotal, results);
+            
+            // 发送高度给父窗口（用于自适应 iframe）
+            if (window.parent && window.parent !== window) {
+                const height = document.body.scrollHeight;
+                window.parent.postMessage({ type: 'setIframeHeight', height: height }, '*');
+            }
         }
 
         function drawChart(tradMonthly, deviceResults) {
