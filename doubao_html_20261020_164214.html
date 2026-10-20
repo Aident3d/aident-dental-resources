@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>国家负责人分配地图</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/map/js/world.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+        body{display:flex;height:100vh}
+        .sidebar{width:280px;background:#f5f7fa;padding:20px;border-right:1px solid #eee;overflow:auto}
+        .sidebar h3{margin-bottom:12px}
+        .search-box{
+            width:100%;
+            padding:8px 10px;
+            border:1px solid #ccc;
+            border-radius:6px;
+            margin-bottom:16px;
+            font-size:14px;
+        }
+        .item{padding:8px 10px;margin:6px 0;border-radius:6px;cursor:pointer;border:1px solid transparent}
+        .item.active{background:#2277ee;color:#fff}
+        .info{margin-top:20px;padding:12px;background:#fff8e8;border-radius:8px;font-size:13px;line-height:1.6}
+        #map{flex:1}
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>国家搜索</h3>
+        <input class="search-box" id="searchInput" placeholder="输入国家中文名，如：巴西、德国">
+
+        <h3>负责人筛选</h3>
+        <div class="item active" data-val="all">全部负责人</div>
+        <div class="item" data-val="闭梅婷">🟠 闭梅婷</div>
+        <div class="item" data-val="陈银蕊">🔵 陈银蕊</div>
+        <div class="item" data-val="罗华齐">🟢 罗华齐</div>
+
+        <div class="info">
+            悬浮地图国家查看负责人；<br>
+            支持负责人筛选 + 国家搜索叠加过滤<br>
+            配色：闭梅婷橙色｜陈银蕊蓝色｜罗华齐绿色
+        </div>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        const myChart = echarts.init(document.getElementById('map'));
+        // 数据：国家名称、负责人、所属区域
+        const rawData = [
+            // ====== 闭梅婷 ======
+            {name:"Morocco",ch:"摩洛哥",leader:"闭梅婷",region:"北非"},
+            {name:"Tunisia",ch:"突尼斯",leader:"闭梅婷",region:"北非"},
+            {name:"Algeria",ch:"阿尔及利亚",leader:"闭梅婷",region:"北非"},
+            {name:"Libya",ch:"利比亚",leader:"闭梅婷",region:"北非"},
+            {name:"Saudi Arabia",ch:"沙特",leader:"闭梅婷",region:"西亚"},
+            {name:"Yemen",ch:"也门",leader:"闭梅婷",region:"西亚"},
+            {name:"Oman",ch:"阿曼",leader:"闭梅婷",region:"西亚"},
+            {name:"United Arab Emirates",ch:"阿联酋",leader:"闭梅婷",region:"西亚"},
+            {name:"Bahrain",ch:"巴林",leader:"闭梅婷",region:"西亚"},
+            {name:"Kuwait",ch:"科威特",leader:"闭梅婷",region:"西亚"},
+            {name:"Afghanistan",ch:"阿富汗",leader:"闭梅婷",region:"中亚"},
+            {name:"Pakistan",ch:"巴基斯坦",leader:"闭梅婷",region:"南亚"},
+            {name:"Australia",ch:"澳大利亚",leader:"闭梅婷",region:"大洋洲"},
+            {name:"Venezuela",ch:"委内瑞拉",leader:"闭梅婷",region:"南美洲"},
+            {name:"Guyana",ch:"圭亚那",leader:"闭梅婷",region:"南美洲"},
+            {name:"Suriname",ch:"苏里南",leader:"闭梅婷",region:"南美洲"},
+            {name:"Colombia",ch:"哥伦比亚",leader:"闭梅婷",region:"南美洲"},
+            {name:"Ecuador",ch:"厄瓜多尔",leader:"闭梅婷",region:"南美洲"},
+            {name:"Peru",ch:"秘鲁",leader:"闭梅婷",region:"南美洲"},
+            {name:"Brazil",ch:"巴西",leader:"闭梅婷",region:"南美洲"},
+            {name:"Bolivia",ch:"玻利维亚",leader:"闭梅婷",region:"南美洲"},
+            {name:"Paraguay",ch:"巴拉圭",leader:"闭梅婷",region:"南美洲"},
+            {name:"Chile",ch:"智利",leader:"闭梅婷",region:"南美洲"},
+            {name:"Argentina",ch:"阿根廷",leader:"闭梅婷",region:"南美洲"},
+            {name:"Uruguay",ch:"乌拉圭",leader:"闭梅婷",region:"南美洲"},
+            {name:"Mexico",ch:"墨西哥",leader:"闭梅婷",region:"北美拉美"},
+            {name:"Costa Rica",ch:"哥斯达黎加",leader:"闭梅婷",region:"北美拉美"},
+            {name:"Nicaragua",ch:"尼加拉瓜",leader:"闭梅婷",region:"北美拉美"},
+            {name:"Guatemala",ch:"危地马拉",leader:"闭梅婷",region:"北美拉美"},
+            {name:"Cuba",ch:"古巴",leader:"闭梅婷",region:"北美拉美"},
+
+            // ====== 陈银蕊 ======
+            {name:"Iran",ch:"伊朗",leader:"陈银蕊",region:"中东"},
+            {name:"Iraq",ch:"伊拉克",leader:"陈银蕊",region:"中东"},
+            {name:"Syria",ch:"叙利亚",leader:"陈银蕊",region:"中东"},
+            {name:"Jordan",ch:"约旦",leader:"陈银蕊",region:"中东"},
+            {name:"Lebanon",ch:"黎巴嫩",leader:"陈银蕊",region:"中东"},
+            {name:"Israel",ch:"以色列",leader:"陈银蕊",region:"中东"},
+            {name:"Turkey",ch:"土耳其",leader:"陈银蕊",region:"中东"},
+            {name:"Egypt",ch:"埃及",leader:"陈银蕊",region:"中东"},
+            {name:"Greece",ch:"希腊",leader:"陈银蕊",region:"欧洲"},
+            {name:"Croatia",ch:"克罗地亚",leader:"陈银蕊",region:"欧洲"},
+            {name:"Austria",ch:"奥地利",leader:"陈银蕊",region:"欧洲"},
+            {name:"Germany",ch:"德国",leader:"陈银蕊",region:"欧洲"},
+            {name:"Denmark",ch:"丹麦",leader:"陈银蕊",region:"欧洲"},
+            {name:"Netherlands",ch:"荷兰",leader:"陈银蕊",region:"欧洲"},
+            {name:"France",ch:"法国",leader:"陈银蕊",region:"欧洲"},
+            {name:"Belgium",ch:"比利时",leader:"陈银蕊",region:"欧洲"},
+            {name:"Italy",ch:"意大利",leader:"陈银蕊",region:"欧洲"},
+            {name:"Spain",ch:"西班牙",leader:"陈银蕊",region:"欧洲"},
+            {name:"Portugal",ch:"葡萄牙",leader:"陈银蕊",region:"欧洲"},
+            {name:"Ireland",ch:"爱尔兰",leader:"陈银蕊",region:"欧洲"},
+            {name:"United Kingdom",ch:"英国",leader:"陈银蕊",region:"欧洲"},
+            {name:"Norway",ch:"挪威",leader:"陈银蕊",region:"欧洲"},
+            {name:"Sweden",ch:"瑞典",leader:"陈银蕊",region:"欧洲"},
+            {name:"Finland",ch:"芬兰",leader:"陈银蕊",region:"欧洲"},
+            {name:"Estonia",ch:"爱沙尼亚",leader:"陈银蕊",region:"欧洲"},
+            {name:"Latvia",ch:"拉脱维亚",leader:"陈银蕊",region:"欧洲"},
+            {name:"Lithuania",ch:"立陶宛",leader:"陈银蕊",region:"欧洲"},
+            {name:"Japan",ch:"日本",leader:"陈银蕊",region:"日韩"},
+            {name:"South Korea",ch:"韩国",leader:"陈银蕊",region:"日韩"},
+
+            // ====== 罗华齐 ======
+            {name:"Belarus",ch:"白俄罗斯",leader:"罗华齐",region:"东欧"},
+            {name:"Bulgaria",ch:"保加利亚",leader:"罗华齐",region:"东欧"},
+            {name:"Czech Republic",ch:"捷克",leader:"罗华齐",region:"东欧"},
+            {name:"Hungary",ch:"匈牙利",leader:"罗华齐",region:"东欧"},
+            {name:"Moldova",ch:"摩尔多瓦",leader:"罗华齐",region:"东欧"},
+            {name:"Poland",ch:"波兰",leader:"罗华齐",region:"东欧"},
+            {name:"Romania",ch:"罗马尼亚",leader:"罗华齐",region:"东欧"},
+            {name:"Russia",ch:"俄罗斯",leader:"罗华齐",region:"东欧"},
+            {name:"Slovakia",ch:"斯洛伐克",leader:"罗华齐",region:"东欧"},
+            {name:"Ukraine",ch:"乌克兰",leader:"罗华齐",region:"东欧"},
+            {name:"Kazakhstan",ch:"哈萨克斯坦",leader:"罗华齐",region:"中亚"},
+            {name:"Kyrgyzstan",ch:"吉尔吉斯斯坦",leader:"罗华齐",region:"中亚"},
+            {name:"Tajikistan",ch:"塔吉克斯坦",leader:"罗华齐",region:"中亚"},
+            {name:"Uzbekistan",ch:"乌兹别克斯坦",leader:"罗华齐",region:"中亚"},
+            {name:"Turkmenistan",ch:"土库曼斯坦",leader:"罗华齐",region:"中亚"},
+            {name:"Vietnam",ch:"越南",leader:"罗华齐",region:"东南亚"},
+            {name:"Laos",ch:"老挝",leader:"罗华齐",region:"东南亚"},
+            {name:"Cambodia",ch:"柬埔寨",leader:"罗华齐",region:"东南亚"},
+            {name:"Thailand",ch:"泰国",leader:"罗华齐",region:"东南亚"},
+            {name:"Myanmar",ch:"缅甸",leader:"罗华齐",region:"东南亚"},
+            {name:"Malaysia",ch:"马来西亚",leader:"罗华齐",region:"东南亚"},
+            {name:"Singapore",ch:"新加坡",leader:"罗华齐",region:"东南亚"},
+            {name:"Brunei",ch:"文莱",leader:"罗华齐",region:"东南亚"},
+            {name:"Indonesia",ch:"印度尼西亚",leader:"罗华齐",region:"东南亚"},
+            {name:"East Timor",ch:"东帝汶",leader:"罗华齐",region:"东南亚"},
+            {name:"Philippines",ch:"菲律宾",leader:"罗华齐",region:"东南亚"},
+            {name:"India",ch:"印度",leader:"罗华齐",region:"南亚"},
+        ];
+        const colorMap = {
+            "闭梅婷":"#ff9944",
+            "陈银蕊":"#4488ee",
+            "罗华齐":"#44bb77"
+        };
+        let currentFilter = "all";
+        let searchKeyword = "";
+
+        function renderMap(){
+            let showData = rawData;
+            // 负责人筛选
+            if(currentFilter !== "all"){
+                showData = showData.filter(d=>d.leader === currentFilter);
+            }
+            // 国家模糊搜索
+            if(searchKeyword.trim() !== ""){
+                const kw = searchKeyword.trim().toLowerCase();
+                showData = showData.filter(d=>d.ch.includes(kw));
+            }
+            const seriesData = showData.map(item=>{
+                return {
+                    name: item.name,
+                    value: 1,
+                    leader: item.leader,
+                    region: item.region,
+                    cn: item.ch,
+                    itemStyle:{color: colorMap[item.leader]}
+                }
+            })
+            const option = {
+                title:{text:"国家负责人分配地图",left:"center"},
+                tooltip:{
+                    trigger:"item",
+                    formatter:params=>{
+                        if(!params.data) return params.name;
+                        return `【${params.data.leader}】<br>${params.data.cn}（${params.data.region}）`
+                    }
+                },
+                visualMap:{show:false,min:0,max:1},
+                series:[{
+                    type:"map",
+                    map:"world",
+                    roam:true,
+                    zoom:1.2,
+                    label:{show:false},
+                    emphasis:{
+                        label:{show:true},
+                        itemStyle:{areaColor:"#ffdd00"}
+                    },
+                    data:seriesData
+                }]
+            }
+            myChart.setOption(option);
+        }
+        renderMap();
+
+        // 负责人点击筛选
+        document.querySelectorAll('.item').forEach(el=>{
+            el.onclick = ()=>{
+                document.querySelectorAll('.item').forEach(i=>i.classList.remove('active'))
+                el.classList.add('active')
+                currentFilter = el.dataset.val
+                renderMap();
+            }
+        })
+        // 搜索框监听
+        document.getElementById('searchInput').oninput = function(){
+            searchKeyword = this.value;
+            renderMap();
+        }
+        window.addEventListener('resize',()=>myChart.resize())
+    </script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
